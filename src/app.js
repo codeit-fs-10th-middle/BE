@@ -7,7 +7,6 @@ import { pool } from "./db/mysql.js";
 
 import cors from "cors";
 import morgan from "morgan";
-import dbtestController from "./controllers/dbtestController.js";
 const app = express();
 
 // 미들 웨어어
@@ -19,7 +18,7 @@ app.use(morgan("dev"));
 // 라우터
 
 app.use("/users", userController);
-app.use("/dbtest", dbtestController);
+
 
 // 에러 핸들러
 app.use(errorHandler);
