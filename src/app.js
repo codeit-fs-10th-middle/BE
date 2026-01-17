@@ -3,8 +3,11 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import morgan from "morgan";
 
-import userController from "./controllers/userController.js";
 import errorHandler from "./middlewares/errorHandler.js";
+import userRoutes from "./routes/userRoutes.js";
+import photocardRoutes from "./routes/photocardRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
+
 
 const app = express();
 
@@ -15,7 +18,9 @@ app.use(cors());
 app.use(morgan("dev"));
 
 // 라우터
-app.use("/users", userController);
+app.use("/users", userRoutes);
+app.use("/api/photo-cards", photocardRoutes);
+app.use("/api/uploads", uploadRoutes);
 
 // 에러 핸들러
 app.use(errorHandler);
