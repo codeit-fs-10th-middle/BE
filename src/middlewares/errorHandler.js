@@ -1,5 +1,5 @@
 export default function errorHandler(error, req, res, next) {
-  const status = error.status ?? error.code ?? 500;
+  const status = Number.isInteger(error?.status) ? error.status : 500;
   console.error(error);
   return res.status(status).json({
     path: req.path,

@@ -1,8 +1,11 @@
 import express from "express";
-import { presignPhotocardUpload } from "../controllers/uploadController.js";
+import {
+	photocardImageUpload,
+	uploadPhotocardImage,
+} from "../controllers/uploadController.js";
 
 const router = express.Router();
 
-router.post("/photocards/presign", presignPhotocardUpload);
+router.post("/photocards", photocardImageUpload, uploadPhotocardImage);
 
 export default router;

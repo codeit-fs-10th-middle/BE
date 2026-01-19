@@ -42,7 +42,114 @@ async function createPhotoCard({
     return result.insertId;
 }
 
+async function listPhotoCards({ limit, cursor }) {
+    const baseSql = `
+    SELECT
+      photo_card_id,
+      creator_user_id,
+      name,
+      description,
+      genre,
+      grade,
+      min_price,
+      total_supply,
+      image_url,
+      reg_date,
+      upt_date
+    FROM photo_card
+  `;
+
+    if (cursor != null) {
+        const sql = `${baseSql}
+    WHERE photo_card_id < ?
+    ORDER BY photo_card_id DESC
+    LIMIT ?
+    `;
+        const [rows] = await pool.query(sql, [cursor, limit]);
+        return rows;
+    }
+
+    const sql = `${baseSql}
+    ORDER BY photo_card_id DESC
+    LIMIT ?
+    `;
+    const [rows] = await pool.query(sql, [limit]);
+    return rows;
+}
+
+async function getPhotoCardById(photoCardId) {
+    const sql = `
+    SELECT
+      photo_card_id,
+      creator_user_id,
+      name,
+      description,
+      genre,
+      grade,
+      min_price,
+      total_supply,
+      image_url,
+      reg_date,
+      upt_date
+    FROM photo_card
+    WHERE photo_card_id = ?
+    LIMIT 1
+  `;
+    const [rows] = await pool.query(sql, [photoCardId]);
+    return rows[0] ?? null;
+}
+
+  async function updatePhotoCardById(photoCardId, patch) {
+    const fields = [];
+    const params = [];
+
+    if (patch.name !== undefined) {
+      fields.push("name = ?");
+      params.push(patch.name);
+    }
+    if (patch.description !== undefined) {
+      fields.push("description = ?");
+      params.push(patch.description);
+    }
+    if (patch.genre !== undefined) {
+      fields.push("genre = ?");
+      params.push(patch.genre);
+    }
+    if (patch.grade !== undefined) {
+      fields.push("grade = ?");
+      params.push(patch.grade);
+    }
+    if (patch.minPrice !== undefined) {
+      fields.push("min_price = ?");
+      params.push(patch.minPrice);
+    }
+    if (patch.totalSupply !== undefined) {
+      fields.push("total_supply = ?");
+      params.push(patch.totalSupply);
+    }
+    if (patch.imageUrl !== undefined) {
+      fields.push("image_url = ?");
+      params.push(patch.imageUrl);
+    }
+
+    if (fields.length === 0) {
+      return 0;
+    }
+
+    // upt_date는 변경 시점으로 갱신
+    const sql = `
+    UPDATE photo_card
+    SET ${fields.join(", ")}, upt_date = NOW()
+    WHERE photo_card_id = ?
+    `;
+    const [result] = await pool.query(sql, [...params, photoCardId]);
+    return result.affectedRows;
+  }
+
 export default {
     countMonthlyByCreatorUserId,
     createPhotoCard,
+    listPhotoCards,
+    getPhotoCardById,
+  updatePhotoCardById,
 };
