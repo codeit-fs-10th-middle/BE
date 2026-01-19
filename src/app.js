@@ -23,8 +23,4 @@ app.use("/auth", authController);
 // 에러 핸들러
 app.use(errorHandler);
 
-// 서버 실행
-const port = process.env.PORT ?? 3000;
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+export default app;
