@@ -1,0 +1,7 @@
+### point_box_draw 목록 조회
+### .env의 PORT에 맞게 @baseUrl 수정
+
+@baseUrl = http://localhost:3000
+
+### 목록 조회
+GET {{baseUrl}}/api/point-box-draws
