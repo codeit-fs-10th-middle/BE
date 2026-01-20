@@ -146,6 +146,34 @@ async function updatePhotoCardById(photoCardId, patch) {
     return result.affectedRows;
 }
 
+// 동일한 포토카드 찾기 (name, description, genre, grade, min_price, image_url로 검색)
+async function findDuplicatePhotoCard({ name, description, genre, grade, minPrice, imageUrl }) {
+    const sql = `
+        SELECT photo_card_id, total_supply
+        FROM photo_card
+        WHERE name = ?
+          AND (description = ? OR (description IS NULL AND ? IS NULL))
+          AND genre = ?
+          AND grade = ?
+          AND min_price = ?
+          AND image_url = ?
+        LIMIT 1
+    `;
+    const [rows] = await pool.query(sql, [name, description, description, genre, grade, minPrice, imageUrl]);
+    return rows[0] ?? null;
+}
+
+// total_supply 증가
+async function incrementTotalSupply(photoCardId, increment = 1) {
+    const sql = `
+        UPDATE photo_card
+        SET total_supply = total_supply + ?, upt_date = NOW()
+        WHERE photo_card_id = ?
+    `;
+    const [result] = await pool.query(sql, [increment, photoCardId]);
+    return result.affectedRows;
+}
+
 async function createPhotocard({ card_name, card_type, description }) {
     const query = `INSERT INTO photocard (card_name, card_type, description, created_at) VALUES (?, ?, ?, NOW())`;
     const params = [card_name, card_type, description];
@@ -160,4 +188,6 @@ export default {
     getPhotoCardById,
     updatePhotoCardById,
     createPhotocard,
+    findDuplicatePhotoCard,
+    incrementTotalSupply,
 };

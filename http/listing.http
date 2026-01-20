@@ -28,10 +28,10 @@ GET http://localhost:3000/api/listings?limit=10&cursor=5
 GET http://localhost:3000/api/listings?limit=10&status=
 
 ### 리스팅 상세 조회
-GET http://localhost:3000/api/listings/1
+GET http://localhost:3000/api/listings/2
 
 ### 리스팅 수정 (수량 변경)
-PATCH http://localhost:3000/api/listings/1
+PATCH http://localhost:3000/api/listings/2
 Content-Type: application/json
 
 {
@@ -50,7 +50,7 @@ Content-Type: application/json
 }
 
 ### 리스팅 취소
-DELETE http://localhost:3000/api/listings/1
+DELETE http://localhost:3000/api/listings/2
 Content-Type: application/json
 
 {

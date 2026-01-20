@@ -138,16 +138,47 @@ async function createPhotoCard(creatorUserId, payload) {
         throw err;
     }
 
-    const id = await photocardRepo.createPhotoCard({
-        creatorUserId,
+    const description = payload?.description ?? null;
+
+    // 동일한 포토카드가 있는지 확인 (name, description, genre, grade, min_price, image_url)
+    const existing = await photocardRepo.findDuplicatePhotoCard({
         name,
-        description: payload?.description ?? null,
+        description,
         genre,
         grade,
         minPrice,
-        totalSupply: 1, // Start with 1 (current supply)
-        imageUrl,
+        imageUrl: imagePath,
     });
+
+    let id;
+    if (existing) {
+        // 기존 포토카드가 있으면 total_supply 증가
+        // 기존 total_supply + 새로운 totalSupply가 10을 초과하지 않도록 검증
+        const newTotalSupply = existing.total_supply + totalSupply;
+        if (newTotalSupply > 10) {
+            const err = new Error("VALIDATION_ERROR");
+            err.status = 400;
+            err.meta = {
+                field: "totalSupply",
+                rule: `cannot exceed 10 (current: ${existing.total_supply}, requested: ${totalSupply}, would be: ${newTotalSupply})`,
+            };
+            throw err;
+        }
+        await photocardRepo.incrementTotalSupply(existing.photo_card_id, totalSupply);
+        id = existing.photo_card_id;
+    } else {
+        // 기존 포토카드가 없으면 새로 생성
+        id = await photocardRepo.createPhotoCard({
+            creatorUserId,
+            name,
+            description,
+            genre,
+            grade,
+            minPrice,
+            totalSupply,
+            imageUrl: imagePath,
+        });
+    }
 
     // user_card 테이블에 insert
     await createUserCard({
@@ -157,7 +188,7 @@ async function createPhotoCard(creatorUserId, payload) {
         quantity: 1
     });
 
-    return { photoCardId: id, imageUrl };
+    return { photoCardId: id, imageUrl: imagePath };
 }
 
 function mapRow(row) {
@@ -387,23 +418,77 @@ async function listUserPhotoCards(userId) {
 }
 
 export async function createPhotoCardWithUserCard(creatorUserId, payload) {
-    // 1. 포토카드 생성
-    const photoCardId = await photocardRepo.createPhotoCard({
-        creatorUserId,
-        name: payload.name,
-        description: payload.description ?? null,
-        genre: payload.genre,
-        grade: payload.grade,
-        minPrice: payload.minPrice ?? 0,
-        totalSupply: payload.totalSupply,
-        imageUrl: payload.imageUrl,
+    const name = String(payload?.name || "").trim();
+    const genre = normalizeGenre(payload?.genre);
+    const grade = normalizeGrade(payload?.grade);
+    const description = payload?.description ?? null;
+    const minPrice = payload?.minPrice ?? 0;
+    const imageUrl = (payload?.imageUrl && String(payload.imageUrl).trim()) || "";
+    const totalSupply = Number(payload?.totalSupply);
+
+    // totalSupply 검증
+    if (!Number.isFinite(totalSupply) || totalSupply <= 0) {
+        const err = new Error("VALIDATION_ERROR");
+        err.status = 400;
+        err.meta = { field: "totalSupply", rule: "must be positive number" };
+        throw err;
+    }
+    if (totalSupply > 10) {
+        const err = new Error("VALIDATION_ERROR");
+        err.status = 400;
+        err.meta = { field: "totalSupply", rule: "cannot exceed 10" };
+        throw err;
+    }
+
+    // imageUrl 정규화
+    const imagePath = normalizeToPath(imageUrl);
+
+    // 동일한 포토카드가 있는지 확인 (name, description, genre, grade, min_price, image_url)
+    const existing = await photocardRepo.findDuplicatePhotoCard({
+        name,
+        description,
+        genre,
+        grade,
+        minPrice,
+        imageUrl: imagePath,
     });
+
+    let photoCardId;
+    if (existing) {
+        // 기존 포토카드가 있으면 total_supply 증가
+        // 기존 total_supply + 새로운 totalSupply가 10을 초과하지 않도록 검증
+        const newTotalSupply = existing.total_supply + totalSupply;
+        if (newTotalSupply > 10) {
+            const err = new Error("VALIDATION_ERROR");
+            err.status = 400;
+            err.meta = {
+                field: "totalSupply",
+                rule: `cannot exceed 10 (current: ${existing.total_supply}, requested: ${totalSupply}, would be: ${newTotalSupply})`,
+            };
+            throw err;
+        }
+        await photocardRepo.incrementTotalSupply(existing.photo_card_id, totalSupply);
+        photoCardId = existing.photo_card_id;
+    } else {
+        // 기존 포토카드가 없으면 새로 생성
+        photoCardId = await photocardRepo.createPhotoCard({
+            creatorUserId,
+            name,
+            description,
+            genre,
+            grade,
+            minPrice,
+            totalSupply,
+            imageUrl: imagePath,
+        });
+    }
+
     // 2. user_card 생성
     await createUserCard({
         ownerId: creatorUserId,
         photocardId: photoCardId,
         createdUserId: creatorUserId,
-        quantity: payload.totalSupply
+        quantity: totalSupply
     });
-    return { photoCardId, createdUserId, quantity: payload.totalSupply };
+    return { photoCardId, createdUserId: creatorUserId, quantity: totalSupply };
 }
