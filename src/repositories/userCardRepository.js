@@ -59,3 +59,14 @@ export async function findAllByUserId(userId) {
   const [rows] = await pool.query(sql, [userId]);
   return rows;
 }
+
+// 특정 포토카드의 모든 user_card의 quantity 합계 계산
+export async function getTotalQuantityByPhotoCardId(photoCardId) {
+  const sql = `
+    SELECT COALESCE(SUM(quantity), 0) as total_quantity
+    FROM user_card
+    WHERE photo_card_id = ?
+  `;
+  const [rows] = await pool.query(sql, [photoCardId]);
+  return Number(rows[0]?.total_quantity || 0);
+}

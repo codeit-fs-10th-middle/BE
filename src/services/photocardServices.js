@@ -1,5 +1,5 @@
 import photocardRepo from "../repositories/photoCardRepository.js";
-import { createUserCard, findAllByUserId } from "../repositories/userCardRepository.js";
+import { createUserCard, findAllByUserId, getTotalQuantityByPhotoCardId } from "../repositories/userCardRepository.js";
 
 const MONTHLY_LIMIT = Number(process.env.PHOTO_CARD_MONTHLY_LIMIT || 3);
 
@@ -152,19 +152,19 @@ async function createPhotoCard(creatorUserId, payload) {
 
     let id;
     if (existing) {
-        // 기존 포토카드가 있으면 total_supply 증가
+        // 기존 포토카드가 있으면 user_card에 추가
         // 기존 total_supply + 새로운 totalSupply가 10을 초과하지 않도록 검증
-        const newTotalSupply = existing.total_supply + totalSupply;
+        const currentTotalQuantity = await getTotalQuantityByPhotoCardId(existing.photo_card_id);
+        const newTotalSupply = currentTotalQuantity + totalSupply;
         if (newTotalSupply > 10) {
             const err = new Error("VALIDATION_ERROR");
             err.status = 400;
             err.meta = {
                 field: "totalSupply",
-                rule: `cannot exceed 10 (current: ${existing.total_supply}, requested: ${totalSupply}, would be: ${newTotalSupply})`,
+                rule: `cannot exceed 10 (current: ${currentTotalQuantity}, requested: ${totalSupply}, would be: ${newTotalSupply})`,
             };
             throw err;
         }
-        await photocardRepo.incrementTotalSupply(existing.photo_card_id, totalSupply);
         id = existing.photo_card_id;
     } else {
         // 기존 포토카드가 없으면 새로 생성
@@ -180,13 +180,17 @@ async function createPhotoCard(creatorUserId, payload) {
         });
     }
 
-    // user_card 테이블에 insert
+    // user_card 테이블에 insert (기존 포토카드든 새 포토카드든 동일하게 처리)
     await createUserCard({
         ownerId: creatorUserId,
         photocardId: id,
         createdUserId: creatorUserId,
-        quantity: 1
+        quantity: totalSupply
     });
+
+    // total_supply를 실제 user_card의 quantity 합계로 동기화
+    const actualTotalSupply = await getTotalQuantityByPhotoCardId(id);
+    await photocardRepo.updateTotalSupply(id, actualTotalSupply);
 
     return { photoCardId: id, imageUrl: imagePath };
 }
@@ -455,19 +459,19 @@ export async function createPhotoCardWithUserCard(creatorUserId, payload) {
 
     let photoCardId;
     if (existing) {
-        // 기존 포토카드가 있으면 total_supply 증가
-        // 기존 total_supply + 새로운 totalSupply가 10을 초과하지 않도록 검증
-        const newTotalSupply = existing.total_supply + totalSupply;
+        // 기존 포토카드가 있으면 user_card에 추가
+        // 기존 quantity 합계 + 새로운 totalSupply가 10을 초과하지 않도록 검증
+        const currentTotalQuantity = await getTotalQuantityByPhotoCardId(existing.photo_card_id);
+        const newTotalSupply = currentTotalQuantity + totalSupply;
         if (newTotalSupply > 10) {
             const err = new Error("VALIDATION_ERROR");
             err.status = 400;
             err.meta = {
                 field: "totalSupply",
-                rule: `cannot exceed 10 (current: ${existing.total_supply}, requested: ${totalSupply}, would be: ${newTotalSupply})`,
+                rule: `cannot exceed 10 (current: ${currentTotalQuantity}, requested: ${totalSupply}, would be: ${newTotalSupply})`,
             };
             throw err;
         }
-        await photocardRepo.incrementTotalSupply(existing.photo_card_id, totalSupply);
         photoCardId = existing.photo_card_id;
     } else {
         // 기존 포토카드가 없으면 새로 생성
@@ -490,5 +494,10 @@ export async function createPhotoCardWithUserCard(creatorUserId, payload) {
         createdUserId: creatorUserId,
         quantity: totalSupply
     });
+
+    // total_supply를 실제 user_card의 quantity 합계로 동기화
+    const actualTotalSupply = await getTotalQuantityByPhotoCardId(photoCardId);
+    await photocardRepo.updateTotalSupply(photoCardId, actualTotalSupply);
+
     return { photoCardId, createdUserId: creatorUserId, quantity: totalSupply };
 }

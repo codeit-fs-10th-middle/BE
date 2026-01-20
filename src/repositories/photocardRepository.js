@@ -174,6 +174,17 @@ async function incrementTotalSupply(photoCardId, increment = 1) {
     return result.affectedRows;
 }
 
+// total_supply를 지정된 값으로 업데이트
+async function updateTotalSupply(photoCardId, totalSupply) {
+    const sql = `
+        UPDATE photo_card
+        SET total_supply = ?, upt_date = NOW()
+        WHERE photo_card_id = ?
+    `;
+    const [result] = await pool.query(sql, [totalSupply, photoCardId]);
+    return result.affectedRows;
+}
+
 async function createPhotocard({ card_name, card_type, description }) {
     const query = `INSERT INTO photocard (card_name, card_type, description, created_at) VALUES (?, ?, ?, NOW())`;
     const params = [card_name, card_type, description];
@@ -190,4 +201,5 @@ export default {
     createPhotocard,
     findDuplicatePhotoCard,
     incrementTotalSupply,
+    updateTotalSupply,
 };

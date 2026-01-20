@@ -31,13 +31,13 @@ GET http://localhost:3000/api/listings?limit=10&status=
 GET http://localhost:3000/api/listings/2
 
 ### 리스팅 수정 (수량 변경)
-PATCH http://localhost:3000/api/listings/2
+PATCH http://localhost:3000/api/listings/1
 Content-Type: application/json
 
 {
   "sellerUserId": 1,
-  "quantity": 1,
-  "pricePerUnit": 6000
+  "quantity": 4,
+  "pricePerUnit": 5000
 }
 
 ### 리스팅 수정 (가격만 변경)
@@ -50,7 +50,7 @@ Content-Type: application/json
 }
 
 ### 리스팅 취소
-DELETE http://localhost:3000/api/listings/2
+DELETE http://localhost:3000/api/listings/1
 Content-Type: application/json
 
 {
