@@ -1,0 +1,25 @@
+### 포인트 API (ERD: user.points, point_history, point_box_draw)
+### .env의 PORT에 맞게 @baseUrl 수정
+
+@baseUrl = http://localhost:3000
+
+### 1) 유저 보유 포인트 조회 (user.points)
+GET {{baseUrl}}/api/points/users/2/balance
+
+### 2) 포인트 내역 조회 (point_history), limit/cursor
+GET {{baseUrl}}/api/points/users/2/history
+# GET {{baseUrl}}/api/points/users/1/history?limit=10
+# GET {{baseUrl}}/api/points/users/1/history?limit=10&cursor=5
+
+### 3) 포인트 뽑기 내역 (point_box_draw), limit/cursor
+GET {{baseUrl}}/api/points/users/2/box-draws
+# GET {{baseUrl}}/api/points/users/1/box-draws?limit=10
+
+### 4) 포인트 뽑기 실행 (point_box_draw + point_history)
+
+POST {{baseUrl}}/api/points/box-draw
+Content-Type: application/json
+
+{
+  "userId": 2
+}
