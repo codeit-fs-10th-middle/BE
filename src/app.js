@@ -9,7 +9,6 @@ import userRoutes from "./routes/userRoutes.js";
 import photocardRoutes from "./routes/photocardRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import listingRoutes from "./routes/listingRoutes.js";
-import pointRoutes from "./routes/pointRoutes.js";
 
 
 const app = express();
@@ -28,7 +27,6 @@ app.use("/users", userRoutes);
 app.use("/api/photo-cards", photocardRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/listings", listingRoutes);
-app.use("/api/points", pointRoutes);
 
 // 에러 핸들러
 app.use(errorHandler);
