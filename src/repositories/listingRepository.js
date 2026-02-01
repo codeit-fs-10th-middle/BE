@@ -68,13 +68,15 @@ async function getListingById(listingId) {
     return rows[0] ?? null;
 }
 
-// 리스팅 목록 조회 (필터링 및 정렬)
+// 리스팅 목록 조회 (필터링 및 정렬) - 전체 판매 목록
 async function listListings({
     limit,
     cursor,
     sortBy = "reg_date",
     sortOrder = "DESC",
     status = "ACTIVE",
+    grade = null,
+    genre = null,
 }) {
     // 정렬 필드 검증
     const allowedSortFields = {
@@ -87,6 +89,10 @@ async function listListings({
     // status 필터
     const statusFilter = status ? "AND l.status = ?" : "";
     const statusParam = status ? [status] : [];
+    const gradeFilter = grade ? "AND pc.grade = ?" : "";
+    const gradeParam = grade ? [String(grade).trim().toLowerCase()] : [];
+    const genreFilter = genre ? "AND pc.genre = ?" : "";
+    const genreParam = genre ? [String(genre).trim()] : [];
 
     let sql = `
         SELECT
@@ -117,9 +123,11 @@ async function listListings({
         LEFT JOIN \`user\` u ON l.seller_user_id = u.user_id
         WHERE 1=1
         ${statusFilter}
+        ${gradeFilter}
+        ${genreFilter}
     `;
 
-    const params = [...statusParam];
+    const params = [...statusParam, ...gradeParam, ...genreParam];
 
     // cursor 기반 페이지네이션 (listing_id를 cursor로 사용)
     if (cursor != null) {
@@ -153,6 +161,8 @@ async function listListingsBySellerId(sellerUserId, {
     sortBy = "reg_date",
     sortOrder = "DESC",
     status = "ACTIVE",
+    grade = null,
+    genre = null,
 } = {}) {
     const allowedSortFields = {
         reg_date: "l.reg_date",
@@ -163,6 +173,10 @@ async function listListingsBySellerId(sellerUserId, {
 
     const statusFilter = status ? "AND l.status = ?" : "";
     const statusParam = status ? [status] : [];
+    const gradeFilter = grade ? "AND pc.grade = ?" : "";
+    const gradeParam = grade ? [String(grade).trim().toLowerCase()] : [];
+    const genreFilter = genre ? "AND pc.genre = ?" : "";
+    const genreParam = genre ? [String(genre).trim()] : [];
 
     let sql = `
         SELECT
@@ -193,9 +207,11 @@ async function listListingsBySellerId(sellerUserId, {
         LEFT JOIN \`user\` u ON l.seller_user_id = u.user_id
         WHERE l.seller_user_id = ?
         ${statusFilter}
+        ${gradeFilter}
+        ${genreFilter}
     `;
 
-    const params = [sellerUserId, ...statusParam];
+    const params = [sellerUserId, ...statusParam, ...gradeParam, ...genreParam];
 
     if (cursor != null) {
         if (sortBy === "reg_date") {

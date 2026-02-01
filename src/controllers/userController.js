@@ -86,7 +86,7 @@ export async function getMyCards(req, res, next) {
 /**
  * GET /users/me/listings
  * 로그인한 유저가 판매 중인 카드 목록. Cookie 필요.
- * 쿼리: status (기본 ACTIVE), limit, cursor, sortBy, sortOrder
+ * 쿼리: status (ACTIVE | SOLD_OUT), grade (common|rare|epic|legendary), genre (앨범|팬싸|...), sortBy (reg_date|price), sortOrder, limit, cursor
  */
 export async function getMyListings(req, res, next) {
   try {
@@ -100,6 +100,8 @@ export async function getMyListings(req, res, next) {
     const sortBy = req.query?.sortBy || "reg_date";
     const sortOrder = req.query?.sortOrder || "DESC";
     const status = req.query?.status ?? "ACTIVE";
+    const grade = req.query?.grade ?? null;
+    const genre = req.query?.genre ?? null;
 
     const data = await listingService.listListingsBySellerId(req.userId, {
       limit,
@@ -107,6 +109,8 @@ export async function getMyListings(req, res, next) {
       sortBy,
       sortOrder,
       status,
+      grade,
+      genre,
     });
     return res.status(200).json({ ok: true, data });
   } catch (err) {
