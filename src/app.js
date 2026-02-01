@@ -15,6 +15,11 @@ import purchaseRoutes from "./routes/purchaseRoutes.js";
 
 
 const app = express();
+const allowedOrigins = [
+  "https://fe-qxmzjlp3a-codeit-fs-10th.vercel.app",
+  "https://fe-eight-omega.vercel.app",
+  "http://localhost:3000",
+];
 
 // 미들웨어
 app.use(express.json());
@@ -22,7 +27,13 @@ app.use(cookieParser());
 // credentials 사용 시 origin은 * 불가 → 구체적 출처 지정
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
