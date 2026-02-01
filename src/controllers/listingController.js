@@ -15,7 +15,8 @@ export async function create(req, res, next) {
     }
 }
 
-// 리스팅 목록 조회
+// 리스팅 목록 조회 (전체 판매 목록)
+// 쿼리: limit, cursor, status (ACTIVE | SOLD_OUT), grade (common|rare|epic|legendary), genre, sortBy (reg_date|price), sortOrder
 export async function list(req, res, next) {
     try {
         const limit = req.query?.limit;
@@ -23,6 +24,8 @@ export async function list(req, res, next) {
         const sortBy = req.query?.sortBy || "reg_date";
         const sortOrder = req.query?.sortOrder || "DESC";
         const status = req.query?.status || "ACTIVE";
+        const grade = req.query?.grade ?? null;
+        const genre = req.query?.genre ?? null;
 
         const data = await listingService.listListings({
             limit,
@@ -30,6 +33,8 @@ export async function list(req, res, next) {
             sortBy,
             sortOrder,
             status,
+            grade,
+            genre,
         });
         return res.json({ ok: true, data });
     } catch (err) {
