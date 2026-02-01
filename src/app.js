@@ -12,6 +12,7 @@ import listingRoutes from "./routes/listingRoutes.js";
 import sellRoutes from "./routes/sellRoutes.js";
 import pointBoxDrawRoutes from "./routes/pointBoxDrawRoutes.js";
 import purchaseRoutes from "./routes/purchaseRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 
 const app = express();
@@ -41,6 +42,7 @@ app.use("/api/listings", listingRoutes);
 app.use("/api/sell", sellRoutes);
 app.use("/api/point-box-draws", pointBoxDrawRoutes);
 app.use("/api/purchases", purchaseRoutes);
+app.use("/notifications", notificationRoutes);
 
 // 에러 핸들러
 app.use(errorHandler);

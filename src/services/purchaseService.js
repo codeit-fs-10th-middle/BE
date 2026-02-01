@@ -1,6 +1,7 @@
 import { pool } from "../db/mysql.js";
 import purchaseRepo from "../repositories/purchaseRepository.js";
 import pointHistoryRepo from "../repositories/pointHistoryRepository.js";
+import notificationRepo from "../repositories/notificationRepository.js";
 
 /**
  * 카드 구매 (포인트 결제)
@@ -175,6 +176,20 @@ async function purchaseCard(buyerUserId, listingId, quantity) {
     );
 
     await conn.commit();
+
+    // 알림: 구매자(구매 완료), 판매자(카드 판매)
+    await notificationRepo.create({
+      userId: buyerUserId,
+      type: "PURCHASE_COMPLETED",
+      entityType: "PURCHASE",
+      entityId: purchaseId,
+    });
+    await notificationRepo.create({
+      userId: row.seller_user_id,
+      type: "SALE_COMPLETED",
+      entityType: "PURCHASE",
+      entityId: purchaseId,
+    });
 
     const purchase = await purchaseRepo.getPurchaseById(purchaseId);
     return {
