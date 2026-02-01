@@ -1,6 +1,7 @@
 import { pool } from "../db/mysql.js";
 import pointHistoryRepo from "../repositories/pointHistoryRepository.js";
 import pointBoxDrawRepo from "../repositories/pointBoxDrawRepository.js";
+import notificationRepo from "../repositories/notificationRepository.js";
 
 // 포인트 차감/증가 (트랜잭션 처리)
 async function updateUserPoints(userId, amount, type, refEntityType = null, refEntityId = null) {
@@ -131,6 +132,14 @@ async function drawPointBox(userId) {
     );
 
     await connection.commit();
+
+    // 알림: 랜덤포인트뽑기 결과
+    await notificationRepo.create({
+      userId,
+      type: "POINT_BOX_DRAW",
+      entityType: "POINT_BOX_DRAW",
+      entityId: drawId,
+    });
 
     return {
       drawId,
