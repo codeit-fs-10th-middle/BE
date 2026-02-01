@@ -9,6 +9,7 @@ import userRoutes from "./routes/userRoutes.js";
 import photocardRoutes from "./routes/photocardRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import listingRoutes from "./routes/listingRoutes.js";
+import sellRoutes from "./routes/sellRoutes.js";
 import pointBoxDrawRoutes from "./routes/pointBoxDrawRoutes.js";
 import purchaseRoutes from "./routes/purchaseRoutes.js";
 
@@ -18,7 +19,13 @@ const app = express();
 // 미들웨어
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors());
+// credentials 사용 시 origin은 * 불가 → 구체적 출처 지정
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    credentials: true,
+  })
+);
 app.use(morgan("dev"));
 
 // 로컬 업로드 파일 정적 서빙
@@ -29,6 +36,7 @@ app.use("/users", userRoutes);
 app.use("/api/photo-cards", photocardRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/listings", listingRoutes);
+app.use("/api/sell", sellRoutes);
 app.use("/api/point-box-draws", pointBoxDrawRoutes);
 app.use("/api/purchases", purchaseRoutes);
 

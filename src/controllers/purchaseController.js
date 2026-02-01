@@ -6,20 +6,25 @@ import purchaseService from "../services/purchaseService.js";
  */
 export async function purchase(req, res, next) {
   try {
-    const buyerUserId = req.user?.user_id ?? req.body.buyerUserId;
-    const { listingId, quantity } = req.body;
+    const buyerUserId = req.user?.user_id ?? req.body?.buyerUserId;
+    const listingId = req.body?.listingId;
+    const quantity = req.body?.quantity;
 
-    if (!buyerUserId) {
+    if (buyerUserId == null || buyerUserId === "") {
       return res.status(400).json({ ok: false, error: "구매자 ID가 필요합니다." });
     }
-    if (!listingId) {
+    if (listingId == null || listingId === "") {
       return res.status(400).json({ ok: false, error: "리스팅 ID가 필요합니다." });
     }
-    if (quantity == null) {
+    if (quantity == null || quantity === "") {
       return res.status(400).json({ ok: false, error: "구매 수량이 필요합니다." });
     }
 
-    const data = await purchaseService.purchaseCard(buyerUserId, listingId, quantity);
+    const data = await purchaseService.purchaseCard(
+      Number(buyerUserId),
+      Number(listingId),
+      Number(quantity)
+    );
     return res.status(201).json({ ok: true, data });
   } catch (err) {
     return next(err);

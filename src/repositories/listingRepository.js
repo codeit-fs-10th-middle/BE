@@ -8,12 +8,15 @@ async function createListing({
     status,
     quantity,
     pricePerUnit,
+    desiredGrade = null,
+    desiredGenre = null,
+    desiredDesc = null,
 }) {
     const sql = `
         INSERT INTO listing
-            (user_card_id, seller_user_id, sale_type, status, quantity, price_per_unit)
+            (user_card_id, seller_user_id, sale_type, status, quantity, price_per_unit, desired_grade, desired_genre, desired_desc)
         VALUES
-            (?, ?, ?, ?, ?, ?)
+            (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const [result] = await pool.query(sql, [
         userCardId,
@@ -22,6 +25,9 @@ async function createListing({
         status,
         quantity,
         pricePerUnit,
+        desiredGrade ?? null,
+        desiredGenre ?? null,
+        desiredDesc ?? null,
     ]);
     return result.insertId;
 }
@@ -32,14 +38,14 @@ async function getListingById(listingId) {
         SELECT
             l.listing_id,
             l.user_card_id,
-            l.seller_user_id,
+            uc.user_id AS seller_user_id, -- seller_user_id 컬럼 추가 전까지 user_card 소유자로 대체
             l.sale_type,
             l.status,
             l.quantity,
             l.price_per_unit,
-            l.desired_grade,
-            l.desired_genre,
-            l.desired_desc,
+            NULL AS desired_grade, -- desired_grade 컬럼 추가 전까지 NULL로 대체
+            NULL AS desired_genre, -- desired_genre 컬럼 추가 전까지 NULL로 대체
+            NULL AS desired_desc, -- desired_desc 컬럼 추가 전까지 NULL로 대체
             l.reg_date,
             l.upt_date,
             uc.user_id,
@@ -90,12 +96,12 @@ async function listListings({
             l.status,
             l.quantity,
             l.price_per_unit,
-            l.desired_grade,
-            l.desired_genre,
-            l.desired_desc,
+            NULL AS desired_grade,
+            NULL AS desired_genre,
+            NULL AS desired_desc,
             l.reg_date,
             l.upt_date,
-            uc.user_id,
+            l.seller_user_id,
             uc.photo_card_id,
             pc.name,
             pc.description,

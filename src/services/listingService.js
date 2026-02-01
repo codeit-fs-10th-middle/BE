@@ -69,6 +69,10 @@ async function createListing(sellerUserId, payload) {
         throw err;
     }
 
+    const desiredGrade = payload?.desiredGrade != null ? String(payload.desiredGrade).trim() || null : null;
+    const desiredGenre = payload?.desiredGenre != null ? String(payload.desiredGenre).trim() || null : null;
+    const desiredDesc = payload?.desiredDesc != null ? String(payload.desiredDesc).trim() || null : null;
+
     const listingId = await listingRepo.createListing({
         userCardId,
         sellerUserId,
@@ -76,6 +80,9 @@ async function createListing(sellerUserId, payload) {
         status: "ACTIVE",
         quantity,
         pricePerUnit,
+        desiredGrade,
+        desiredGenre,
+        desiredDesc,
     });
 
     const listing = await listingRepo.getListingById(listingId);

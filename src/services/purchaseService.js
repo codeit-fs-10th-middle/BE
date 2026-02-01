@@ -47,7 +47,8 @@ async function purchaseCard(buyerUserId, listingId, quantity) {
       e.status = 400;
       throw e;
     }
-    if (row.sale_type !== "SELL" && row.sale_type !== "SELL_OR_EXCHANGE") {
+    const saleType = (row.sale_type || "").toUpperCase();
+    if (saleType !== "SELL" && saleType !== "SELL_OR_EXCHANGE") {
       await conn.rollback();
       const e = new Error("구매할 수 없는 리스팅입니다.");
       e.status = 400;
@@ -64,13 +65,6 @@ async function purchaseCard(buyerUserId, listingId, quantity) {
     if (qty > row.listing_quantity) {
       await conn.rollback();
       const e = new Error(`구매 가능 수량 초과 (가능: ${row.listing_quantity})`);
-      e.status = 400;
-      throw e;
-    }
-
-    if (Number(row.seller_user_id) === Number(buyerUserId)) {
-      await conn.rollback();
-      const e = new Error("자신의 리스팅은 구매할 수 없습니다.");
       e.status = 400;
       throw e;
     }
