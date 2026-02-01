@@ -146,6 +146,79 @@ async function listListings({
     return rows;
 }
 
+// 판매자(seller_user_id) 기준 리스팅 목록 (로그인한 유저의 판매 중인 카드 등)
+async function listListingsBySellerId(sellerUserId, {
+    limit = 20,
+    cursor = null,
+    sortBy = "reg_date",
+    sortOrder = "DESC",
+    status = "ACTIVE",
+} = {}) {
+    const allowedSortFields = {
+        reg_date: "l.reg_date",
+        price: "l.price_per_unit",
+    };
+    const sortField = allowedSortFields[sortBy] || allowedSortFields.reg_date;
+    const order = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+
+    const statusFilter = status ? "AND l.status = ?" : "";
+    const statusParam = status ? [status] : [];
+
+    let sql = `
+        SELECT
+            l.listing_id,
+            l.user_card_id,
+            l.seller_user_id,
+            l.sale_type,
+            l.status,
+            l.quantity,
+            l.price_per_unit,
+            l.desired_grade,
+            l.desired_genre,
+            l.desired_desc,
+            l.reg_date,
+            l.upt_date,
+            uc.photo_card_id,
+            pc.name,
+            pc.description,
+            pc.genre,
+            pc.grade,
+            pc.min_price,
+            pc.image_url,
+            pc.creator_user_id,
+            u.nickname AS seller_nickname
+        FROM listing l
+        JOIN user_card uc ON l.user_card_id = uc.user_card_id
+        JOIN photo_card pc ON uc.photo_card_id = pc.photo_card_id
+        LEFT JOIN \`user\` u ON l.seller_user_id = u.user_id
+        WHERE l.seller_user_id = ?
+        ${statusFilter}
+    `;
+
+    const params = [sellerUserId, ...statusParam];
+
+    if (cursor != null) {
+        if (sortBy === "reg_date") {
+            sql += ` AND (l.reg_date ${order === "DESC" ? "<" : ">"} (SELECT reg_date FROM listing WHERE listing_id = ?)
+                    OR (l.reg_date = (SELECT reg_date FROM listing WHERE listing_id = ?) AND l.listing_id < ?))`;
+            params.push(cursor, cursor, cursor);
+        } else if (sortBy === "price") {
+            sql += ` AND (l.price_per_unit ${order === "DESC" ? "<" : ">"} (SELECT price_per_unit FROM listing WHERE listing_id = ?)
+                    OR (l.price_per_unit = (SELECT price_per_unit FROM listing WHERE listing_id = ?) AND l.listing_id < ?))`;
+            params.push(cursor, cursor, cursor);
+        } else {
+            sql += ` AND l.listing_id < ?`;
+            params.push(cursor);
+        }
+    }
+
+    sql += ` ORDER BY ${sortField} ${order}, l.listing_id DESC LIMIT ?`;
+    params.push(limit);
+
+    const [rows] = await pool.query(sql, params);
+    return rows;
+}
+
 // 리스팅 수정
 async function updateListing(listingId, patch) {
     const fields = [];
@@ -225,6 +298,7 @@ export default {
     createListing,
     getListingById,
     listListings,
+    listListingsBySellerId,
     updateListing,
     deleteListing,
     getActiveListingByUserCardId,

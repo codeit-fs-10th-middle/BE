@@ -10,6 +10,7 @@ router.post('/signup', userController.signup);
 
 router.get('/me', requireAuth, userController.getMe);
 router.get('/me/cards', requireAuth, userController.getMyCards);
+router.get('/me/listings', requireAuth, userController.getMyListings);
 
 router.get('/auth/google', userController.getAuthGoogle);
 router.get('/auth/google/callback', userController.getAuthGoogleCallback);

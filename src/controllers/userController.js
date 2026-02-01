@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import axios from "axios";
 import userService from "../services/userService.js";
+import listingService from "../services/listingService.js";
 import { findAllByUserId } from "../repositories/userCardRepository.js";
 
 const JWT_SECRET =
@@ -76,6 +77,38 @@ export async function getMyCards(req, res, next) {
     }
     const rows = await findAllByUserId(req.userId);
     return res.status(200).json({ data: rows ?? [] });
+  } catch (err) {
+    err.status = err.status ?? err.code ?? 500;
+    next(err);
+  }
+}
+
+/**
+ * GET /users/me/listings
+ * 로그인한 유저가 판매 중인 카드 목록. Cookie 필요.
+ * 쿼리: status (기본 ACTIVE), limit, cursor, sortBy, sortOrder
+ */
+export async function getMyListings(req, res, next) {
+  try {
+    if (!req.userId) {
+      const err = new Error("인증이 필요합니다.");
+      err.status = 401;
+      return next(err);
+    }
+    const limit = req.query?.limit;
+    const cursor = req.query?.cursor;
+    const sortBy = req.query?.sortBy || "reg_date";
+    const sortOrder = req.query?.sortOrder || "DESC";
+    const status = req.query?.status ?? "ACTIVE";
+
+    const data = await listingService.listListingsBySellerId(req.userId, {
+      limit,
+      cursor,
+      sortBy,
+      sortOrder,
+      status,
+    });
+    return res.status(200).json({ ok: true, data });
   } catch (err) {
     err.status = err.status ?? err.code ?? 500;
     next(err);
