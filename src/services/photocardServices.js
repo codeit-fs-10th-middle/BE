@@ -8,20 +8,12 @@ import {
   countGradesByUserId,
 } from '../repositories/userCardRepository.js';
 
-const MONTHLY_LIMIT = Number(process.env.PHOTO_CARD_MONTHLY_LIMIT || 3);
-
-const ALLOWED_GRADES = new Set(['common', 'rare', 'epic', 'legendary']);
+const ALLOWED_GRADES = new Set(['common', 'rare', 'superrare', 'legendary']);
 const ALLOWED_GENRES = new Set([
-  '앨범',
-  '특전',
-  '팬싸',
-  '시즌그리팅',
-  '팬미팅',
-  '콘서트',
-  'MD',
-  '콜라보',
-  '팬클럽',
-  '기타',
+  '음식',
+  '풍경',
+  '동물',
+  '인물',
 ]);
 
 function normalizeGrade(value) {
@@ -66,14 +58,6 @@ function normalizeToPath(imageUrl) {
     }
   }
   return raw;
-}
-
-function getLocalMonthRange(date = new Date()) {
-  const y = date.getFullYear();
-  const m = date.getMonth();
-  const from = new Date(y, m, 1, 0, 0, 0, 0);
-  const to = new Date(y, m + 1, 1, 0, 0, 0, 0);
-  return { from, to };
 }
 
 function mapRow(row) {
@@ -137,19 +121,6 @@ async function createPhotoCard(creatorUserId, payload) {
     const err = new Error('VALIDATION_ERROR');
     err.status = 400;
     err.meta = { field: 'creatorUserId', rule: 'must be a positive integer' };
-    throw err;
-  }
-
-  const { from, to } = getLocalMonthRange();
-  const used = await photocardRepo.countMonthlyByCreatorUserId(
-    creatorUserId,
-    from,
-    to,
-  );
-  if (used >= MONTHLY_LIMIT) {
-    const err = new Error('MONTHLY_LIMIT_EXCEEDED');
-    err.status = 429;
-    err.meta = { limit: MONTHLY_LIMIT, used };
     throw err;
   }
 
