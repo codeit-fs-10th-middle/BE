@@ -302,6 +302,7 @@ function mapRow(row) {
         listingId: Number(row.listing_id),
         userCardId: Number(row.user_card_id),
         sellerUserId: Number(row.seller_user_id),
+        sellerNickname: row.seller_nickname ?? null,
         saleType: row.sale_type,
         status: row.status,
         quantity: Number(row.quantity),

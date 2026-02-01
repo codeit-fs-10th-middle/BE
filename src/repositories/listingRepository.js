@@ -38,17 +38,16 @@ async function getListingById(listingId) {
         SELECT
             l.listing_id,
             l.user_card_id,
-            uc.user_id AS seller_user_id, -- seller_user_id 컬럼 추가 전까지 user_card 소유자로 대체
+            l.seller_user_id,
             l.sale_type,
             l.status,
             l.quantity,
             l.price_per_unit,
-            NULL AS desired_grade, -- desired_grade 컬럼 추가 전까지 NULL로 대체
-            NULL AS desired_genre, -- desired_genre 컬럼 추가 전까지 NULL로 대체
-            NULL AS desired_desc, -- desired_desc 컬럼 추가 전까지 NULL로 대체
+            NULL AS desired_grade,
+            NULL AS desired_genre,
+            NULL AS desired_desc,
             l.reg_date,
             l.upt_date,
-            uc.user_id,
             uc.photo_card_id,
             pc.name,
             pc.description,
@@ -56,10 +55,12 @@ async function getListingById(listingId) {
             pc.grade,
             pc.min_price,
             pc.image_url,
-            pc.creator_user_id
+            pc.creator_user_id,
+            u.nickname AS seller_nickname
         FROM listing l
         JOIN user_card uc ON l.user_card_id = uc.user_card_id
         JOIN photo_card pc ON uc.photo_card_id = pc.photo_card_id
+        LEFT JOIN \`user\` u ON l.seller_user_id = u.user_id
         WHERE l.listing_id = ?
         LIMIT 1
     `;
@@ -101,7 +102,6 @@ async function listListings({
             NULL AS desired_desc,
             l.reg_date,
             l.upt_date,
-            l.seller_user_id,
             uc.photo_card_id,
             pc.name,
             pc.description,
@@ -109,10 +109,12 @@ async function listListings({
             pc.grade,
             pc.min_price,
             pc.image_url,
-            pc.creator_user_id
+            pc.creator_user_id,
+            u.nickname AS seller_nickname
         FROM listing l
         JOIN user_card uc ON l.user_card_id = uc.user_card_id
         JOIN photo_card pc ON uc.photo_card_id = pc.photo_card_id
+        LEFT JOIN \`user\` u ON l.seller_user_id = u.user_id
         WHERE 1=1
         ${statusFilter}
     `;
