@@ -139,6 +139,35 @@ async function listListings({ limit = 20, cursor = null, sortBy = "reg_date", so
     return { items, nextCursor };
 }
 
+// 로그인한 유저(판매자)의 리스팅 목록 (판매 중인 카드 등)
+async function listListingsBySellerId(sellerUserId, opts = {}) {
+    if (!Number.isInteger(sellerUserId) || sellerUserId <= 0) {
+        const err = new Error("VALIDATION_ERROR");
+        err.status = 400;
+        err.meta = { field: "sellerUserId", rule: "must be a positive integer" };
+        throw err;
+    }
+
+    const limit = Math.min(Number(opts.limit) || 20, 50);
+    const cursor = opts.cursor != null ? Number(opts.cursor) : null;
+    const sortBy = opts.sortBy || "reg_date";
+    const sortOrder = (opts.sortOrder || "DESC").toUpperCase();
+    const status = opts.status ?? "ACTIVE";
+
+    const rows = await listingRepo.listListingsBySellerId(sellerUserId, {
+        limit,
+        cursor,
+        sortBy,
+        sortOrder,
+        status,
+    });
+
+    const items = rows.map(mapRow);
+    const nextCursor = items.length ? items[items.length - 1].listingId : null;
+
+    return { items, nextCursor };
+}
+
 // 리스팅 상세 조회
 async function getListingById(listingId) {
     const id = Number(listingId);
@@ -329,6 +358,7 @@ function mapRow(row) {
 export default {
     createListing,
     listListings,
+    listListingsBySellerId,
     getListingById,
     updateListing,
     cancelListing,
